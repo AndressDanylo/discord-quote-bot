@@ -26,7 +26,15 @@ async def quote(interaction, message_link: str):
         fetched_message = await interaction.channel.fetch_message(get_message_id(message_link))
     except Exception:
         await interaction.response.send_message("This is not a valid link")
+        return
     
     await interaction.response.send_message('"' + fetched_message.content + '"')
+
+
+# TODO help command
+@tree.command(name="help", description="Help")
+async def help(interaction):
+    await interaction.response.send_message("Help")
+
 
 client.run(config.TOKEN)
