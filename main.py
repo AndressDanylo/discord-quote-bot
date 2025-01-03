@@ -25,7 +25,7 @@ async def quote(interaction, message_link: str):
     try:
         fetched_message = await interaction.channel.fetch_message(get_message_id(message_link))
     except Exception:
-        await interaction.response.send_message("This is not a valid link")
+        await interaction.response.send_message(interaction.user.avatar)
         return
     
     await interaction.response.send_message('"' + fetched_message.content + '"')
