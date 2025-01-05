@@ -24,7 +24,7 @@ def get_message_id(link):
 async def quote(interaction, message_link: str):
     try:
         fetched_message = await interaction.channel.fetch_message(get_message_id(message_link))
-        await interaction.response.send_message(fetched_message.author.avatar.url if fetched_message.author.avatar else fetched_message.author.url)
+        await interaction.response.send_message(fetched_message.author.avatar.url if fetched_message.author.avatar else fetched_message.author.default_avatar.url)
     except Exception:
         await interaction.response.send_message(interaction.user.avatar)
         return
