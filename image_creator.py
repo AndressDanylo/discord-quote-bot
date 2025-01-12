@@ -1,41 +1,70 @@
 from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import io
+import asyncio
 
+def wrap_text(text, font, max_width, draw):
+    lines = []
+    words = text.split()
+    current_line = words.pop(0)
 
-async def fetch_discord_avatar(avatar_url):
-    # downloads user avatar
+    for word in words:
+        bbox = draw.textbbox((0, 0), current_line + ' ' + word, font=font)
+        if bbox[2] <= max_width:
+            current_line += ' ' + word
+        else:
+            lines.append(current_line)
+            current_line = word
+    lines.append(current_line)
+    return lines
+
+async def fetch_avatar(url):
     async with aiohttp.ClientSession() as session:
-            async with session.get(avatar_url) as response:
-                if response.status == 200:
-                    avatar_data = await response.read()
-                    return avatar_data
-                else:
-                    raise Exception("Failed to fetch avatar")
+        async with session.get(url) as response:
+            if response.status == 200:
+                return await response.read()
+            raise Exception("Failed to fetch avatar")
 
+async def create_quote_image(quote, author, avatar_url, save_path):
+    # Configurations
+    width, height = 1000, 500
+    bg_color, text_color = "black", (255, 255, 255)
+    blur_path = "media/quote_blur.png"
+    main_font_path, author_font_path, italic_font_path = "media/DMS.ttf", "media/Roboto.ttf", "media/Roboto-italic.ttf"
 
-async def create_quote_image(quote_text, quote_author, quote_author_avatar, save_path):
-        # creates quote image and saves it to given directory
-        image_size = (1000, 500)
-        background_color = (0, 0, 0)
-        text_color = (255, 255, 255)
-        text_position = (500,400)
-        blur_image = Image.open("media/quote_blur.png").convert("RGBA")
+    # Fonts
+    font = ImageFont.truetype(font_path, 25)
+    author_font = ImageFont.truetype(author_font_path, 25)
+    italic_font = ImageFont.truetype(italic_font_path, 15)
 
-        # open avatar
-        avatar_data = await fetch_discord_avatar(quote_author_avatar)
-        avatar_image = Image.open(io.BytesIO(avatar_data)).convert("RGBA")
-        avatar_image = avatar_image.resize((500, 500)) 
+    # Fetch avatar and prepare images
+    avatar_data = await fetch_avatar(avatar_url)
+    avatar = Image.open(io.BytesIO(avatar_data)).convert("RGBA").resize((500, 500))
+    blur_image = Image.open(blur_path).convert("RGBA")
 
-        # blank image to draw on
-        image = Image.new("RGBA", image_size, color=background_color)
-        draw = ImageDraw.Draw(image)
+    # Create base image
+    image = Image.new("RGBA", (width, height), bg_color)
+    image.paste(avatar, (-50, 0), avatar)
+    image.paste(blur_image, (0, 0), blur_image)
 
-        # image handling
-        draw.text(text_position, quote_text, fill=text_color, font=ImageFont.load_default())
-        image.paste(avatar_image, (-50, 0), avatar_image)
-        image.paste(blur_image, (0, 0), blur_image)
+    # Draw text
+    draw = ImageDraw.Draw(image)
+    max_text_width = 400
+    lines = wrap_text(quote, font, max_text_width, draw)
 
+    total_height = sum(draw.textbbox((0, 0), line, font=font)[3] - draw.textbbox((0, 0), line, font=font)[1] for line in lines) + (len(lines) - 1) * 5
+    y = (height - total_height) // 2
 
-        # image save
-        image.save(save_path)
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        text_width = bbox[2] - bbox[0]
+        x = (width + 400 - text_width) // 2
+        draw.text((x, y), line, font=font, fill=text_color)
+        y += bbox[3] - bbox[1] + 5
+
+    # Add author details
+    draw.text((x, y + 25), author, font=author_font)
+    draw.text((x, y + 50), "@danyila", font=italic_font)
+
+    # Save image
+    image.save(save_path)
