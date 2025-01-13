@@ -25,13 +25,13 @@ async def fetch_avatar(url):
                 return await response.read()
             raise Exception("Failed to fetch avatar")
 
-async def create_quote_image(quote, author, avatar_url, save_path):
+async def create_quote_image(quote, author, author_username, quote_date, avatar_url, save_path):
     # Creates quote image and returns its path if created successfully
     # Configurations
     width, height = 1000, 500
     bg_color, text_color = "black", (255, 255, 255)
     blur_path = "media/quote_blur.png"
-    main_font_path, author_font_path, italic_font_path = "media/DMS.ttf", "media/Roboto.ttf", "media/Roboto-italic.ttf"
+    main_font_path, author_font_path, italic_font_path = "media/Roboto.ttf", "media/Roboto.ttf", "media/Roboto-italic.ttf"
 
     # Fonts
     font = ImageFont.truetype(main_font_path, 25)
@@ -64,20 +64,10 @@ async def create_quote_image(quote, author, avatar_url, save_path):
         y += bbox[3] - bbox[1] + 5
 
     # Add author details
-    draw.text((x, y + 25), author, font=author_font)
-    draw.text((x, y + 50), "@danyila", font=italic_font)
+    draw.text((x, y + 25), f"-{author}", font=author_font)
+    draw.text((x, y + 50), author_username, font=italic_font)
+    draw.text((width - 100, height - 30), quote_date.strftime("%Y-%m-%d"), font=italic_font)
 
     # Save image
     image.save(save_path)
     return save_path
-
-
-
-# asyncio.run(
-#     create_quote_image(
-#         "quote quote quote quote quote quote quote quote quote quote quote",
-#         "AndressDany",
-#         "https://cdn.discordapp.com/avatars/972765205144690728/87d0d188d16d6f85a0c6dc4d971d048e.png?size=1024",
-#         "media/image.png",
-#     )
-# )

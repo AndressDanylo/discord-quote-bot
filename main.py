@@ -3,7 +3,7 @@ import config
 from image_creator import create_quote_image
 
 # bot setup
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
@@ -20,16 +20,12 @@ def get_message_id(link):
     return link.split("/")[-1]
 
 
-@tree.command(name="quote", description="Converts the message into a customized quote image")
-@discord.app_commands.describe(message_link="Link to the message you want to quote")
-async def quote(interaction, message_link: str):
-    fetched_message = await interaction.channel.fetch_message(get_message_id(message_link))
-    file_path = await create_quote_image(fetched_message.content, fetched_message.author.display_name, fetched_message.author.avatar.url, "media/image.png")
-    print(file_path)
+@tree.context_menu(name="quote")
+@discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+async def quote(interaction, message: discord.Message):
+    file_path = await create_quote_image(message.content, message.author.display_name, message.author.name, message.created_at, message.author.avatar.url, "media/image.png")
     with open(file_path, "rb") as file:
-        await fetched_message.channel.send(file=discord.File(file, filename="image.png"))
-    
-    await interaction.response.send_message('"' + fetched_message.content + '"')
+        await interaction.response.send_message(file=discord.File(file, filename="image.png"))
 
 
 # TODO help command
