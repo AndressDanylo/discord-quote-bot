@@ -1,7 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import aiohttp
 import io
-import asyncio
 
 def wrap_text(text, font, max_width, draw):
     lines = []
@@ -31,12 +30,13 @@ async def create_quote_image(quote, author, author_username, quote_date, avatar_
     width, height = 1000, 500
     bg_color, text_color = "black", (255, 255, 255)
     blur_path = "media/quote_blur.png"
-    main_font_path, author_font_path, italic_font_path = "media/Roboto.ttf", "media/Roboto.ttf", "media/Roboto-italic.ttf"
+    main_font_path, italic_font_path = "media/Roboto.ttf", "media/Roboto-italic.ttf"
 
     # Fonts
     font = ImageFont.truetype(main_font_path, 25)
-    author_font = ImageFont.truetype(author_font_path, 25)
-    italic_font = ImageFont.truetype(italic_font_path, 15)
+    author_font = ImageFont.truetype(italic_font_path, 25)
+    username_font = ImageFont.truetype(main_font_path, 15)
+    date_font = ImageFont.truetype(main_font_path, 15)
 
     # Fetch avatar and prepare images
     avatar_data = await fetch_avatar(avatar_url)
@@ -44,7 +44,7 @@ async def create_quote_image(quote, author, author_username, quote_date, avatar_
     blur_image = Image.open(blur_path).convert("RGBA")
 
     # Create base image
-    image = Image.new("RGBA", (width, height), bg_color)
+    image = Image.new("RGB", (width, height), bg_color)
     image.paste(avatar, (-50, 0), avatar)
     image.paste(blur_image, (0, 0), blur_image)
 
@@ -65,8 +65,8 @@ async def create_quote_image(quote, author, author_username, quote_date, avatar_
 
     # Add author details
     draw.text((x, y + 25), f"-{author}", font=author_font)
-    draw.text((x, y + 50), author_username, font=italic_font)
-    draw.text((width - 100, height - 30), quote_date.strftime("%Y-%m-%d"), font=italic_font)
+    draw.text((x, y + 50), author_username, font=username_font, fill="#808080")
+    draw.text((width - 100, height - 30), quote_date.strftime("%Y-%m-%d"), font=date_font)
 
     # Save image
     image.save(save_path)
