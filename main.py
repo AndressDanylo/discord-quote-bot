@@ -15,11 +15,6 @@ async def on_ready():
     print(f'We have logged in as {client.user} and synced commands.')
 
 
-def get_message_id(link):
-    # gets discord message id from link(https://discord.com/channels/{guild id}/{channel id}/{message id})
-    return link.split("/")[-1]
-
-
 @tree.context_menu(name="quote")
 @discord.app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def quote(interaction, message: discord.Message):
