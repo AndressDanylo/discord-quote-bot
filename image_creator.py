@@ -24,12 +24,26 @@ async def fetch_avatar(url):
                 return await response.read()
             raise Exception("Failed to fetch avatar")
 
-async def create_quote_image(quote, author, author_username, quote_date, avatar_url, save_path):
+async def create_quote_image(quote, author, author_username, quote_date, avatar_url, save_path, background="dark"):
     # Creates quote image and returns its path if created successfully
     # Configurations
+    quote = quote[:400] + "..." if len(quote) >= 400 else quote # symbol limit
     width, height = 1000, 500
-    bg_color, text_color = "black", (255, 255, 255)
-    blur_path = "media/quote_blur.png"
+    bg_colors = {
+        "dark": "black",
+        "light": "white",
+        "grayscale": "black",
+    }
+    text_colors = {
+        "dark": (255, 255, 255), # contrast with dark background
+        "light": (0, 0, 0), # contrast with light background
+        "grayscale": (255, 255, 255),
+    }
+    blur_paths = {
+        "dark": "media/quote_blur_dark.png",
+        "light": "media/quote_blur_light.png",
+        "grayscale": "media/quote_blur_dark.png",
+    }
     main_font_path, italic_font_path = "media/Roboto.ttf", "media/Roboto-italic.ttf"
 
     # Fonts
@@ -41,10 +55,10 @@ async def create_quote_image(quote, author, author_username, quote_date, avatar_
     # Fetch avatar and prepare images
     avatar_data = await fetch_avatar(avatar_url)
     avatar = Image.open(io.BytesIO(avatar_data)).convert("RGBA").resize((500, 500))
-    blur_image = Image.open(blur_path).convert("RGBA")
+    blur_image = Image.open(blur_paths[background]).convert("RGBA")
 
     # Create base image
-    image = Image.new("RGB", (width, height), bg_color)
+    image = Image.new("RGB", (width, height), bg_colors[background])
     image.paste(avatar, (-50, 0), avatar)
     image.paste(blur_image, (0, 0), blur_image)
 
@@ -60,13 +74,17 @@ async def create_quote_image(quote, author, author_username, quote_date, avatar_
         bbox = draw.textbbox((0, 0), line, font=font)
         text_width = bbox[2] - bbox[0]
         x = (width + 400 - text_width) // 2
-        draw.text((x, y), line, font=font, fill=text_color)
+        draw.text((x, y), line, font=font, fill=text_colors[background])
         y += bbox[3] - bbox[1] + 5
 
     # Add author details
-    draw.text((x, y + 25), f"-{author}", font=author_font)
+    draw.text((x, y + 25), f"-{author}", font=author_font, fill=text_colors[background])
     draw.text((x, y + 50), author_username, font=username_font, fill="#808080")
-    draw.text((width - 100, height - 30), quote_date.strftime("%Y-%m-%d"), font=date_font)
+    draw.text((width - 100, height - 30), quote_date.strftime("%Y-%m-%d"), font=date_font, fill=text_colors[background])
+
+    # Convert to grayscale if needed
+    if background == "grayscale":
+        image = image.convert("LA")
 
     # Save image
     image.save(save_path)
