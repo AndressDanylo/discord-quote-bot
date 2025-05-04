@@ -21,7 +21,7 @@ async def on_ready():
 async def quote(interaction, message: discord.Message):
     file_path = await create_quote_image(message.content, message.author.display_name, message.author.name, message.created_at, message.author.avatar.url, "media/image.png")
     with open(file_path, "rb") as file:
-        await interaction.response.send_message(file=discord.File(file, filename="image.png"), view=MyView() if str(interaction.guild) else None) # customization view only appears in servers because discord doesn't allow accessing private or group chat messages required for customization 
+        await interaction.response.send_message(file=discord.File(file, filename="image.png"), view=MyView() if interaction.guild and interaction.guild.me.joined_at else None) # customization view only appears in servers because discord doesn't allow accessing private or group chat messages required for customization 
 
 
 @tree.command(name="help", description="How to use the bot")

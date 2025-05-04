@@ -27,7 +27,7 @@ async def fetch_avatar(url):
 async def create_quote_image(quote, author, author_username, quote_date, avatar_url, save_path, background="dark"):
     # Creates quote image and returns its path if created successfully
     # Configurations
-    quote = quote[:400] + "..." if len(quote) >= 400 else quote # symbol limit
+    quote = quote[:400] + "..." if len(quote) >= 400 or not quote else quote # symbol limit
     width, height = 1000, 500
     bg_colors = {
         "dark": "black",
